@@ -6,15 +6,30 @@
 //
 
 import SwiftUI
+import AVFAudio
 
 struct ContentView: View {
     @State private var message = ""
     @State private var imageName = ""
-    @State private var imageNumber = 0
-    @State private var messageNumber = 0
+    @State private var lastMessageNumber = -1
+    @State private var lastImageNumber = -1
+    @State private var lastSoundNumber = -1
+    @State private var audioPlayer: AVAudioPlayer!
+    let numberOfImages = 10 //images labeled image0 - image9
+    let numberOfSounds = 7 //sounds labeled sound0 - sound6
+    
     var body: some View {
         
         VStack {
+            Text(message)
+                .font(.largeTitle)
+                .fontWeight(.heavy)
+                .foregroundStyle(.red)
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.5)
+                .frame(minHeight: 100)
+                .animation(.easeInOut(duration: 0.15), value: message)
+            
             Spacer()
             
             Image(imageName)
@@ -22,12 +37,7 @@ struct ContentView: View {
                 .scaledToFit()
                 .clipShape(RoundedRectangle(cornerRadius: 30))
                 .shadow(radius: 30)
-            
-            Text(message)
-                .font(.largeTitle)
-                .fontWeight(.heavy)
-                .foregroundStyle(.red)
-                .multilineTextAlignment(.center)
+                .animation(.default, value: imageName)
             
             Spacer()
             
@@ -39,24 +49,43 @@ struct ContentView: View {
                                 "You Make Me Smile!",
                                 "When the Genius Bar Needs Help, They'll Call You!"]
                 
+                var messageNumber: Int
+                repeat {
+                    messageNumber = Int.random(in: 0...messages.count-1)
+                } while messageNumber == lastMessageNumber
                 message = messages[messageNumber]
-                messageNumber += 1
-                if messageNumber == messages.count {
-                    messageNumber = 0
-                }
+                lastMessageNumber = messageNumber
                 
+                var imageNumber: Int
+                repeat {
+                    imageNumber = Int.random(in: 0...(numberOfImages-1))
+                } while imageNumber == lastImageNumber
                 imageName = "image\(imageNumber)"
-                //imageNumber = imageNumber + 1
-                imageNumber += 1
+                lastImageNumber = imageNumber
                 
-                if imageNumber > 9 {
-                    imageNumber = 0
+                var soundNumber: Int
+                repeat {
+                    soundNumber = Int.random(in: 0...numberOfSounds-1)
+                } while soundNumber == lastSoundNumber
+                lastSoundNumber = soundNumber
+                let soundName = "sound\(soundNumber)"
+                
+                guard let soundFile = NSDataAsset(name: soundName) else {
+                    print("😡 Could not real file named \(soundName).")
+                    return
                 }
+                do {
+                    audioPlayer = try AVAudioPlayer(data: soundFile.data)
+                    audioPlayer.play()
+                } catch {
+                    print("😡 ERROR: \(error.localizedDescription) creating audioPlayer")
+                }
+                
             }
             .buttonStyle(.borderedProminent)
             .font(.title2)
-            .padding()
         }
+        .padding()
     }
 }
 #Preview {
